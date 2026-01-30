@@ -1,63 +1,70 @@
 import React from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { addItem, removeItem, updateQuantity } from "../CartSlice";
+import { useDispatch } from "react-redux";
 
-function CartItem() {
+// AJUSTE ESSE IMPORT pro caminho real do teu cartSlice:
+import { addItem, removeItem, updateQuantity } from "../store/cartSlice";
+
+const CartItem = ({ item }) => {
   const dispatch = useDispatch();
-  const cartItems = useSelector((state) => state.cart.items);
 
-  const totalPrice = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
+  const handleIncrement = () => {
+    // Se você prefere incrementar via updateQuantity:
+    // dispatch(updateQuantity({ id: item.id, quantity: item.quantity + 1 }));
+
+    // Se teu reducer addItem já incrementa quando existe:
+    dispatch(addItem(item));
+  };
+
+  const handleDecrement = () => {
+    const newQty = (item.quantity || 0) - 1;
+
+    // ✅ requisito: se chegar em 0, remove do carrinho
+    if (newQty <= 0) {
+      dispatch(removeItem(item.id));
+    } else {
+      dispatch(updateQuantity({ id: item.id, quantity: newQty }));
+    }
+  };
+
+  const handleRemove = () => {
+    dispatch(removeItem(item.id));
+  };
+
+  const itemTotal = () => {
+    const price = Number(item.price) || 0;
+    const qty = Number(item.quantity) || 0;
+    return (price * qty).toFixed(2);
+  };
+
+  // ✅ requisito: botão Checkout com alguma lógica
+  const handleCheckout = () => {
+    alert("Checkout successful!");
+  };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>Carrinho de Compras</h2>
+    <div className="cart-container">
+      <h2>Shopping Cart</h2>
 
-      {cartItems.length === 0 && <p>Seu carrinho está vazio.</p>}
-
-      {cartItems.map((item) => (
-        <div
-          key={item.id}
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            borderBottom: "1px solid #ccc",
-            padding: "10px 0"
-          }}
-        >
-          <div>
-            <h4>{item.name}</h4>
-            <p>Preço: R$ {item.price}</p>
-            <p>Quantidade: {item.quantity}</p>
-          </div>
-
-          <div>
-            <button onClick={() => dispatch(updateQuantity({ id: item.id, amount: 1 }))}>
-              +
-            </button>
-
-            <button
-              onClick={() =>
-                dispatch(updateQuantity({ id: item.id, amount: -1 }))
-              }
-              disabled={item.quantity <= 1}
-            >
-              -
-            </button>
-
-            <button onClick={() => dispatch(removeItem(item.id))}>
-              Remover
-            </button>
-          </div>
+      <div className="cart-item">
+        <div className="cart-item-details">
+          <h3>{item.name}</h3>
+          <p>Price: ${Number(item.price).toFixed(2)}</p>
+          <p>Quantity: {item.quantity}</p>
+          <p>Total: ${itemTotal()}</p>
         </div>
-      ))}
 
-      <h3>Total: R$ {totalPrice}</h3>
+        <div className="cart-item-actions">
+          <button onClick={handleDecrement}>-</button>
+          <button onClick={handleIncrement}>+</button>
+          <button onClick={handleRemove}>Remove</button>
+        </div>
+      </div>
+
+      <div className="checkout-section">
+        <button onClick={handleCheckout}>Checkout</button>
+      </div>
     </div>
   );
-}
+};
 
 export default CartItem;
